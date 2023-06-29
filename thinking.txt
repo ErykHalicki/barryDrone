@@ -1,0 +1,11 @@
+reusing last drone project motors battery esc etc
+esp32 flight controller
+find pid library
+controlled by ps3 controller
+add camera and all after it works
+find mpu6050 library that works well (no z axis drift)
+
+print the frame
+make as small as possible
+petg for sure
+
