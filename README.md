@@ -1,7 +1,6 @@
 # BARRY Drone
-Barely Autonomously Running Risky Yahoo Drone
-
-meaningless acronym just wanted to mention Barry B. Benson because the frame is made from a honeycomb design
+BARRY Autonomously Ran Rotors Yesterday
+B     A            R   R      Y
 ![barry.png](barry.png)
 
 Using ps3 controller with [sixaxispairer](https://github.com/user-none/sixaxispairer) and [esp32-ps3](https://github.com/jvpernis/esp32-ps3) for flight testing
