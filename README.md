@@ -1,7 +1,5 @@
 # BARRY Drone
 BARRY Autonomously Ran Rotors Yesterday
-B     A            R   R      Y
-
 
 Using ps3 controller with [sixaxispairer](https://github.com/user-none/sixaxispairer) and [esp32-ps3](https://github.com/jvpernis/esp32-ps3) for flight testing
 
