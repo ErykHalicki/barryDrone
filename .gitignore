@@ -1,2 +1,3 @@
 *.swp
 controllerPairing/build/hidapi/
+*.gcode
