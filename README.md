@@ -3,7 +3,7 @@ BARRY Autonomously Runs Rotors yeah!
 
 Aim of this project is to build a drone from scratch, then later use the platform to test autonomous functionality
 
-Currently still on early testing, but I plan on using the platform to learn about ROS
+Currently still on early testing, but I plan on using the platform to learn more about ROS and computer vision
 
 [Original Attempt from when i was 15](https://github.com/Stargor14/Stone-Drone)
 
