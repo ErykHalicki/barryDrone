@@ -1,5 +1,4 @@
 # BARRY Drone (Work in progress)
-BARRY Autonomously Runs Rotors yeah!
 
 Aim of this project is to build a drone from scratch, then later use the platform to test autonomous functionality
 
