@@ -1,5 +1,5 @@
 # BARRY Drone
-BARRY Autonomously Runs Rotors Yeah
+BARRY Autonomously Runs Rotors
 
 Using ps3 controller with [sixaxispairer](https://github.com/user-none/sixaxispairer) and [esp32-ps3](https://github.com/jvpernis/esp32-ps3) for flight testing
 
