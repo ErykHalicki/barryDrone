@@ -3,6 +3,7 @@
 #include <WiFi.h>
 #include <Wire.h>
 #include <EEPROM.h>
+#include "MPU6050_light.h"
 
 #include "RC.h"
 

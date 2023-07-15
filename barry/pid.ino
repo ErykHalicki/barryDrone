@@ -1,3 +1,5 @@
+//PID rewrite required??
+//use mpu6050 library instead
 float yawRate = 5.0;
 float rollPitchRate = 5.0;
 
@@ -40,6 +42,7 @@ void pid()
       {
         if (axis == 2) 
         { //YAW is always gyro-controlled 
+		/*
           AngleRateTmp = yawRate * rcCommand[YAW];
           RateError = AngleRateTmp - gyroData[axis];
           PTerm = RateError * P_PID;
@@ -55,6 +58,7 @@ void pid()
           
           deltabpt++;
           if (deltabpt >= 6) deltabpt = 0;
+*/
         } 
         else 
         {//not sure what the purpose of gyro mode is
@@ -81,7 +85,7 @@ void pid()
           else // STABI mode
           {
             // calculate error and limit the angle to 45 degrees max inclination
-            errorAngle = constrain(rcCommand[axis],-400,+400) - angle[axis]; //16 bits is ok here           
+            errorAngle = -constrain(rcCommand[axis],-400,+400) - angle[axis]; //16 bits is ok here           
 			
 			// TODO check the angle readings, is is the scale from -1000 to +1000?
 
