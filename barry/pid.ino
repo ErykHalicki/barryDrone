@@ -1,148 +1,153 @@
-//PID rewrite required??
-//use mpu6050 library instead
-float yawRate = 5.0;
-float rollPitchRate = 5.0;
+static int16_t axisPID[3];
+float lastError[3] = {0, 0, 0};
+float P_Gyro = 0.9;    // P8
+float I_Gyro = 0.00;   // I8
+float D_Gyro = 0.05;   // D8
 
-float P_PID = 0.14;    // P8
-float I_PID = 0.00;    // I8
-float D_PID = 0.08;    // D8
+float P_Angle = 0.5;  // P8
+float I_Angle = 0.001; // I8
+float D_Angle = 0.05;   // D8
+float overallScale = 0.4; // PID output multiplier
+float errorSum[3] = {0, 0, 0};
+#define maxYawRate 180
+#define maxTiltAngle 35
+#define IMU_FILTER_SIZE 15 // Size of the filter window
+float angleX=0,angleY=0,gyroZ=0;
+float imuReadings[IMU_FILTER_SIZE][3];
+
+void pid() {
+  int16_t P, I, D;
+  float error;
+
+  // Update IMU readings and apply KZ filter
+  for (int i = IMU_FILTER_SIZE - 1; i > 0; i--) {
+    for (int j = 0; j < 3; j++) {
+      imuReadings[i][j] = imuReadings[i - 1][j];
+    }
+  }
+  imuReadings[0][0] = mpu.getAngleY();
+  imuReadings[0][1] = mpu.getAngleX();
+  imuReadings[0][2] = mpu.getGyroZ();
+
+  // Apply KZ filter
+  for (int j = 0; j < 3; j++) {
+    float filteredValue = 0;
+    for (int i = 0; i < IMU_FILTER_SIZE; i++) {
+      filteredValue += imuReadings[i][j];
+    }
+    filteredValue /= IMU_FILTER_SIZE;
+    // Use the filtered value for angle and gyro
+    if (j==0) angleX = angleX*0.95+filteredValue*0.05;
+    if (j==1) angleY = angleY*0.95+filteredValue*0.05;
+    if (j==2) gyroZ = gyroZ*0.95+filteredValue*0.05;
+  }
+
+	//angleY-= max(0,(int)map(rcValue[THR],1300,1400,15,25));	
+
+  // Roll control
+  error = map(angleX, -maxTiltAngle, maxTiltAngle, -300, 300) - rcCommand[ROLL];
+  errorSum[0] += error;
+  P = error * P_Angle;
+  I = errorSum[0] * I_Angle;
+  D = (error - lastError[0]) * D_Angle;
+  axisPID[0] = (P + I + D) * overallScale;
+  lastError[0] = error;
+
+  // Pitch control
+  error = map(-angleY, -maxTiltAngle, maxTiltAngle, -300, 300) - rcCommand[PITCH];
+  errorSum[1] += error;
+  P = error * P_Angle;
+  I = errorSum[1] * I_Angle;
+  D = (error - lastError[1]) * D_Angle;
+  axisPID[1] = (P + I + D) * overallScale;
+  lastError[1] = error;
+
+  // Yaw control
+  error = map(-gyroZ, -maxYawRate, maxYawRate, -300,300) - rcCommand[YAW];
+  P = error * P_Gyro;
+  I = errorSum[2] * I_Gyro; // Note: There's no I term for Yaw in the original code
+  D = (error - lastError[2]) * D_Gyro;
+  axisPID[2] = (P + I + D) * overallScale;
+  lastError[2] = error;
+
+  // Output PID values for debugging
+  Serial.print(axisPID[0]);
+  Serial.print(" ");
+  Serial.print(axisPID[1]);
+  Serial.print(" ");
+  Serial.println(axisPID[2]);
+/*
+	Serial.print(angleX);
+  Serial.print(" ");
+  Serial.print(angleY);
+  Serial.print(" ");
+  Serial.println(gyroZ);
+
+*/
+}
+/*
+static int16_t axisPID[3];
+float lastError[]={0,0,0};
+float P_Gyro = 0.9;    // P8
+float I_Gyro = 0.00;    // I8
+float D_Gyro = 0.05;    // D8
 
 //0.8 0.01 0.5 a little shaky, on the edge
 //0.8 0.01 0.9 a little shaky, good to fly
 
-float P_Level_PID = 0.40;   // P8
-float I_Level_PID = 0.01;   // I8
-float D_Level_PID = 0.05;   // D8
+float P_Angle = 0.40;   // P8
+float I_Angle = 0.001;  // I8
+float D_Angle = 0.3;   // D8
+float overallScale = 0.2; // PID output multiplier
+float errorSum[]={0,0,0};
+#define maxYawRate 180
+#define maxTiltAngle 35
+#define IMAX 10000
+float angleY=0,angleX=0,gyroZ=0;
+//pid tuning?
+//check if vibration is still a big issue
+//print covers for the proppellors
+//get esp now data reporting working <--- very important
+void pid(){
+	int16_t P,I,D;
+	float error;
+	//roll=y pitch=x yaw=z
+	angleY=0.95*angleY+mpu.getAngleY()*0.05;
+	error=map(angleY,-maxTiltAngle,maxTiltAngle,-500,500)-rcCommand[ROLL];//adjust
+	errorSum[ROLL]+=error;
+	P=error*P_Angle;
+	I=max(IMAX,errorSum[ROLL])*I_Angle;
+	D=(error-lastError[ROLL])*D_Angle;	
+	axisPID[ROLL]=(P+I+D)*overallScale;
+	lastError[ROLL]=error;
 
-static int16_t axisPID[3];
-static int16_t lastError[3] = {0,0,0};
-static float errorGyroI[3] = {0,0,0};
-static float errorAngleI[3] = {0,0,0};
-
-//----------PID controller----------
-    
-#define GYRO_I_MAX 10000.0
-#define ANGLE_I_MAX 6000.0
-
-int plotct;
-int16_t deltab[6][3];
-int8_t  deltabpt = 0;
-int32_t deltasum[3];
-long lastTime=0;
-void pid()
-{
-  uint8_t axis;
-  float errorAngle;
-  float AngleRateTmp, RateError;
-  float PTerm,ITerm,DTerm;
-  int16_t delta;
-  
-      //----------PID controller----------
-      for(axis=0;axis<3;axis++) 
-      {
-        if (axis == 2) 
-        { //YAW is always gyro-controlled 
-		/*
-          AngleRateTmp = yawRate * rcCommand[YAW];
-          RateError = AngleRateTmp - gyroData[axis];
-          PTerm = RateError * P_PID;
-          
-          delta           = RateError - lastError[axis];  
-          lastError[axis] = RateError;
-          deltasum[axis] += delta;
-          deltasum[axis] -= deltab[deltabpt][axis];
-          deltab[deltabpt][axis] = delta;  
-          DTerm = deltasum[axis] * D_PID;
-         
-          ITerm = 0.0;
-          
-          deltabpt++;
-          if (deltabpt >= 6) deltabpt = 0;
+	angleX=0.95*angleX+mpu.getAngleX()*0.05;
+	error=map(-angleX,-maxTiltAngle,maxTiltAngle,-500,500)-rcCommand[PITCH];//adjust
+	errorSum[PITCH]+=error;
+	P=error*P_Angle;
+	I=max(IMAX,errorSum[PITCH])*I_Angle;
+	D=(error-lastError[PITCH])*D_Angle;	
+	axisPID[PITCH]=(P+I+D)*overallScale;
+	lastError[PITCH]=error;
+	
+	gyroZ=gyroZ*0.95+mpu.getGyroZ()*0.05;
+	error=map(-gyroZ,-maxYawRate,maxYawRate,-500,500)-rcCommand[YAW];//adjust
+	//errorSum[YAW]+=error;
+	P=error*P_Gyro;
+	I=max(IMAX,errorSum[YAW])*I_Gyro;//0 value for now
+	D=(error-lastError[YAW])*D_Gyro;	
+	axisPID[YAW]=(P+I+D)*overallScale;
+	lastError[YAW]=error;
+	Serial.print(axisPID[ROLL]);
+	Serial.print(" ");
+	Serial.print(axisPID[PITCH]);
+	Serial.print(" ");
+	Serial.print(axisPID[YAW]);
+	Serial.print(" ");
+	Serial.print(errorSum[ROLL]);
+	Serial.print(" ");
+	Serial.print(errorSum[PITCH]);
+	Serial.print(" ");
+	Serial.println(errorSum[YAW]);
+}
 */
-        } 
-        else 
-        {//not sure what the purpose of gyro mode is
-          if (flightmode == GYRO) // GYRO mode 
-          { 
-            //control is GYRO based (ACRO - direct sticks control is applied to rate PID
-            AngleRateTmp = rollPitchRate * rcCommand[axis];//intended output * coefficent
-            RateError = AngleRateTmp - gyroData[axis];//prev line - gyroOutput
-            //-----calculate P-term
-            PTerm = RateError * P_PID;//error*coeffcient
-            //-----calculate D-term
-            delta           = RateError - lastError[axis];//diff between last error and current error 
-            lastError[axis] = RateError;//update last error
-
-            deltasum[axis] += delta;//adding up differences,
-            deltasum[axis] -= deltab[deltabpt][axis];//not sure what deltab is array of past delta values, deltabpt is the point in the array that is being read?
-			// something isnt making sense here
-            deltab[deltabpt][axis] = delta;
-            
-            DTerm = deltasum[axis] * D_PID;//sum of deltas like an integral? why is it mulitplied by the derivative coefficient
-            //-----calculate I-term
-            ITerm = 0.0;// no integral because gyro data is instantaneous i think
-          }
-          else // STABI mode
-          {
-            // calculate error and limit the angle to 45 degrees max inclination
-            errorAngle = -constrain(rcCommand[axis],-400,+400) - angle[axis]; //16 bits is ok here           
-			
-			// TODO check the angle readings, is is the scale from -1000 to +1000?
-
-            //it's the ANGLE mode - control is angle based, so control loop is needed
-            //-----calculate P-term
-            PTerm = errorAngle * P_Level_PID;
-            //-----calculate D-term
-            delta = (errorAngle-lastError[axis])/(millis()-lastTime); // why is the derivative set to the negative gyroscope value? shouldnt it be something like:
-			lastError[axis] = errorAngle;//update last error
-//			derivative = (new value - old value)/time diff 
-
-			//TODO check pid loop pseudocode on wikipedia
-			//test derivative with time division and no time division
-			//adjust d coefficient, could be very different depending on time/no time
-
-            DTerm = delta * D_Level_PID; 
-            //-----calculate I-term
-            errorAngleI[axis]  += errorAngle * I_Level_PID;
-            errorAngleI[axis]  = constrain(errorAngleI[axis], -ANGLE_I_MAX, +ANGLE_I_MAX);
-            ITerm = errorAngleI[axis] * 0.01;
-          } 
-        }
-         
-        //-----calculate total PID output
-        axisPID[axis] =  PTerm + ITerm + DTerm;
-
-        /*
-        if (axis==2)
-        {
-          Serial.print(AngleRateTmp); Serial.print("  ");
-          Serial.print(RateError); Serial.print("  ");
-          Serial.print(PTerm); Serial.print("  ");
-          Serial.println();
-        }
-        */
-        /*
-        if (axis==0)
-        {
-          Serial.print(PTerm); Serial.print("  ");
-          Serial.print(ITerm); Serial.print("  ");
-          Serial.print(DTerm); Serial.print("  ");
-          if      (plotct == 0) Serial.print(-2000); 
-          else if (plotct == 1) Serial.print( 2000); 
-          else                  Serial.print( 0);
-          if (plotct == 300) plotct = 0; else plotct++; 
-          Serial.println();
-        }
-        */     
-      }
-	lastTime=millis();
-}
-
-void zeroGyroAccI()
-{
-  for(int axis=0;axis<3;axis++) 
-  {
-    errorAngleI[axis] = 0.0;
-    errorGyroI[axis] = 0.0;
-  } 
-}

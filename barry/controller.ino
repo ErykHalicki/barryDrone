@@ -1,7 +1,6 @@
 bool calibrating,cross,tri,sqr,circ,leftTrigger,rightTrigger, leftShoulder, rightShoulder;
 
 bool outputVal=false;
-
 int leftStickX,leftStickY,rightStickX,rightStickY, calibrationCountdown=5;
 float gyroXOffset=0,gyroYOffset=0,gyroX,gyroY;
 
@@ -26,7 +25,7 @@ void calibrateGyro(){
 
 void update(){
 
-	recv=true;
+	lastUpdate=millis();
 	if(!calibrating){
 		if( Ps3.event.button_down.cross )cross=true;
 		if( Ps3.event.button_up.cross )cross=false;
@@ -58,61 +57,40 @@ void update(){
 		gyroY+=Ps3.data.sensor.accelerometer.y-gyroYOffset;
 		gyroX/=2;
 		gyroY/=2;
-
-		if(outputVal){	
-			Serial.print("L1: ");
-			Serial.print(leftShoulder);
-			Serial.print("R1: ");
-			Serial.print(rightShoulder);
-			Serial.print("L2: ");
-			Serial.print(leftTrigger);
-			Serial.print("R2: ");
-			Serial.print(rightTrigger);
-			Serial.print("X: ");
-			Serial.print(cross);
-			Serial.print(" O: ");
-			Serial.print(circ);
-			Serial.print(" T: ");
-			Serial.print(tri);
-			Serial.print(" S: ");
-			Serial.print(sqr);
-			Serial.print(" LX: ");
-			Serial.print(leftStickX);
-			Serial.print(" LY: ");
-			Serial.print(leftStickY);
-			Serial.print(" RX: ");
-			Serial.print(rightStickX);
-			Serial.print(" RY: ");
-			Serial.print(rightStickY);	
-		    Serial.print(" X: ");
-		    Serial.print(gyroX);
-		    Serial.print(" Y: ");
-		    Serial.println(gyroY);
-		}
 	}
+}
+void outputController(){
+	Serial.print("L1: ");
+	Serial.print(leftShoulder);
+	Serial.print("R1: ");
+	Serial.print(rightShoulder);
+	Serial.print("L2: ");
+	Serial.print(leftTrigger);
+	Serial.print("R2: ");
+	Serial.print(rightTrigger);
+	Serial.print("X: ");
+	Serial.print(cross);
+	Serial.print(" O: ");
+	Serial.print(circ);
+	Serial.print(" T: ");
+	Serial.print(tri);
+	Serial.print(" S: ");
+	Serial.print(sqr);
+	Serial.print(" LX: ");
+	Serial.print(leftStickX);
+	Serial.print(" LY: ");
+	Serial.print(leftStickY);
+	Serial.print(" RX: ");
+	Serial.print(rightStickX);
+	Serial.print(" RY: ");
+	Serial.print(rightStickY);	
+	Serial.print(" X: ");
+	Serial.print(gyroX);
+	Serial.print(" Y: ");
+	Serial.println(gyroY);
 }
 void onConnect(){
 	Serial.println("Connected");
 	String address = Ps3.getAddress();
     Serial.println("Started receiving on: "+address);
 }
-/*
-void setup(){
-    Serial.begin(115200);
-    Ps3.begin();
-	Ps3.attach(update);
-	Ps3.attachOnConnect(onConnect);
-}
-
-void loop(){
-	if(Serial.available()>0){
-		String temp=Serial.readString();
-		temp.toUpperCase();
-		if(temp.indexOf("CAL")!=-1)calibrateGyro();
-	}
-	delay(50);
-}
-*/
-// add trigger and shoulder 
-// add gyro smoothing
-// start converting ps3 input to rc channel in actual code
