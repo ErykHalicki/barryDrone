@@ -18,4 +18,3 @@ If i had the funding id love to explore the possibility of an autonomous drone s
 
 ![version1.jpg](photos/version1.jpeg)
 ![StressSimulation3.png](photos/StressSimulation3.png)
-![wiring.png](photos/Wiring.png "Wiring")
