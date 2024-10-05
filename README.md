@@ -1,5 +1,4 @@
-# BARRY Drone (Work in progress)
-
+# BARRY Aerial Drone
 Aim of this project is to build a drone from scratch, then later use the platform to test autonomous functionality
 
 Currently still on early testing, but I plan on using the platform to learn more about ROS and computer vision.
